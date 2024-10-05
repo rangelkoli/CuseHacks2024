@@ -4,6 +4,10 @@ from flask_cors import CORS
 from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
+import google.generativeai as genai
+import os
+
+genai.configure(api_key="AIzaSyAwvCQ2nREhgWtPDDMZC7Qi4srTX8i2WtM")
 
 # Load environment variables
 load_dotenv()
@@ -91,5 +95,30 @@ def get_user():
     except Exception as e:
         return jsonify({"error": str(e)}), 401
 
+
+@app.route('/upload-photo', methods=['POST'])
+def upload_photo():
+    try:
+        file = request.files['photo']
+        # Save the file to a desired location
+        file.save('/path/to/save/photo.jpg')
+        return jsonify({"message": "Photo uploaded successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/show-photo', methods=['GET'])
+def show_photo():
+    try:
+        # Return the saved photo file
+        return send_file('/path/to/save/photo.jpg', mimetype='image/jpeg')
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+
+
