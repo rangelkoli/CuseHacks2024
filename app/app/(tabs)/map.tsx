@@ -291,7 +291,7 @@ const Map = () => {
       });
       axios
         .post(
-          "http://192.168.1.175:5050/user_location_update",
+          "http://10.1.185.75:5050/user_location_update",
           {
             user_id: "10",
             latitude: location.coords.latitude,
@@ -318,7 +318,6 @@ const Map = () => {
 
   return (
     <SafeAreaView>
-      <Text>Map</Text>
       <MapView
         style={{
           width: "100%",

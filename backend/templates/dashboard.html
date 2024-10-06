@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My HTML File</title>
+    <style>
+      #map {
+        height: 400px;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    {% if locations.data %}
+    <h2>Locations</h2>
+    <ul>
+      {% for location in locations.data %}
+      <li>Location ID: {{ location.user_id }}</li>
+      {{ location.name }}
+      <li>
+        Coordinates: {{ location.coordinates.lat }}, {{ location.coordinates.lng
+        }}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>No locations found.</p>
+    {% endif %}
+
+    <div id="map"></div>
+  </body>
+</html>
