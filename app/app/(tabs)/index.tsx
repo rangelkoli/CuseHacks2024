@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Dimensions, Button } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Dimensions, Linking } from 'react-native';
 import axios from 'axios';
 
 // Interface for News Article
@@ -127,8 +127,8 @@ const App = () => {
     fetchNews();
   }, []);
 
-  const handleCardPress = () => {
-    alert('Card pressed!');
+  const handleCardPress = (url: string) => {
+    Linking.openURL(url); // Open the article URL in the user's default web browser
   };
 
   const loadMoreNews = () => {
@@ -148,16 +148,16 @@ const App = () => {
         {/* Buttons Section */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Button 1</Text>
+            <Text style={styles.buttonText}>Emergency</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Button 2</Text>
+            <Text style={styles.buttonText}>Maps</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Button 3</Text>
+            <Text style={styles.buttonText}>DPS</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Button 4</Text>
+            <Text style={styles.buttonText}>Contact DPS</Text>
           </TouchableOpacity>
         </View>
 
@@ -172,7 +172,7 @@ const App = () => {
             description={item.description}
             publisher={item.source.name}
             publishedTime={new Date(item.publishedAt).toLocaleString()}
-            onPress={handleCardPress}
+            onPress={() => handleCardPress(item.url)} // Pass article URL
           />
         ))}
 
@@ -274,53 +274,51 @@ const styles = StyleSheet.create({
   },
   publisher: {
     fontSize: 12,
-    color: '#999',
-    marginTop: 5,
+    color: '#ccc',
   },
   publishedTime: {
     fontSize: 12,
-    color: '#999',
-    marginBottom: 5,
-  },
-  headerText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginVertical: 10,
-    color: '#fff',
+    color: '#ccc',
+    marginBottom: 10,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginVertical: 20,
+    marginBottom: 10,
   },
   button: {
     backgroundColor: '#FF5733',
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
     borderRadius: 5,
-    flex: 1,
-    marginHorizontal: 5,
-    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
   },
+  headerText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FF5733',
+    marginVertical: 10,
+    paddingHorizontal: 10,
+  },
   loadMoreContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 10,
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  loadMoreText: {
+    fontSize: 13,
+    color: '#FF5733',
+    fontWeight: 'bold',
+    paddingHorizontal: 10,
   },
   loadMoreLine: {
     flex: 1,
     height: 1,
     backgroundColor: '#ccc',
-    marginHorizontal: 10,
-  },
-  loadMoreText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#FAC898',
   },
 });
 
