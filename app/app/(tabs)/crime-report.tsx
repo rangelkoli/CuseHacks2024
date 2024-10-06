@@ -1,6 +1,6 @@
 import { View, Text, TextInput, Button, SafeAreaView } from "react-native";
 import React, { useState } from "react";
-
+import { Camera } from "expo-camera";
 const CrimeReport = () => {
   const [crimeDescription, setCrimeDescription] = useState("");
 
@@ -17,6 +17,7 @@ const CrimeReport = () => {
         value={crimeDescription}
         onChangeText={setCrimeDescription}
       />
+
       <Button title='Submit' onPress={submitCrimeReport} />
     </SafeAreaView>
   );

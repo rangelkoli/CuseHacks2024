@@ -29,31 +29,31 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
-  useEffect(() => {
-    async function loadUser() {
-      if (await AsyncStorage.getItem("user_token")) {
-        console.log("User is logged in");
-      } else {
-        const data = axios
-          .post("http://10.1.185.75:5050/user", {})
-          .then((response) => {
-            console.log(response.data);
-            AsyncStorage.setItem("user_token", response.data.user_id);
-          })
-          .catch((error) => {
-            console.error(error);
-          });
-      }
-    }
-    loadUser();
-  });
+  // useEffect(() => {
+  //   async function loadUser() {
+  //     if (await AsyncStorage.getItem("user_token")) {
+  //       console.log("User is logged in");
+  //     } else {
+  //       const data = axios
+  //         .post("http://10.1.185.75:5050/user", {})
+  //         .then((response) => {
+  //           console.log(response.data);
+  //           AsyncStorage.setItem("user_token", response.data.user_id);
+  //         })
+  //         .catch((error) => {
+  //           console.error(error);
+  //         });
+  //     }
+  //   }
+  //   loadUser();
+  // });
 
   if (!loaded) {
     return null;
   }
   const handleSubmit = async (name: string) => {
     const data = axios
-      .post("http://192.168.1.175:5050/user", {
+      .post("http://10.1.185.75:5050/user", {
         name: name,
       })
       .then((response) => {

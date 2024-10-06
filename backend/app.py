@@ -188,6 +188,56 @@ def dps_location():
     new_location = random.choice(dps_locations)
     
     return jsonify(new_location), 200
+
+
+gemPrompt = """
+I will provide you with a video, you ned to check the video and tell me the type of crime that is being commit, your response should be in the form of a json object like this:
+
+{
+    "crime": "Theft",
+    "short_description": "Theft of a purse",
+}
+This is a serious matter so make sure you are sure of what the crime is. IF you are unsure your fallback should be {
+    "crime": "Unsure",
+    "short_description": "Unsure",
+}Or if you think there is no crime in the video {
+    "crime": "No Crime",
+    "short_description": "No Crime",
+}
+
+"""
+@app.route('/crime', methods=['GET'])
+def crime():
+    video_file_name = 'test.mov'
+    try:
+        video_file = genai.upload_file(path=video_file_name)
+        model = genai.GenerativeModel(model_name="gemini-1.5-pro")
+        response = model.generate_content([video_file, gemPrompt],
+                                      request_options={"timeout": 600})
+        print(response.text)
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 400
+    video_file = genai.upload_file(path=video_file_name)
+    model = genai.GenerativeModel(model_name="gemini-1.5-pro")
+    response = model.generate_content([video_file, gemPrompt],
+                                  request_options={"timeout": 600})
+    print(response.text)
+
+
+    return jsonify(response.text), 200
+
+
+
+@app.route('/dashboard', methods=['GET'])
+def dashboard():
+    # Get data from the user's locations table
+    locations = supabase.table('user_locations').select('*').execute()
+    print(locations)
+
+    return render_template('dashboard.html', locations=locations)
+
+
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port="5050")
 
