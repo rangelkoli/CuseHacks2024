@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Dimensions, Linking } from 'react-native';
 import axios from 'axios';
@@ -76,6 +77,7 @@ const WeatherInfo = () => {
         <Text style={styles.weatherTemp}>{`${temperature}°F`}</Text>
         <Text style={styles.weatherDetails}>{`${dayOfWeek}, ${weatherCondition}`}</Text>
       </View>
+
     </View>
   );
 };
@@ -193,6 +195,7 @@ const App = () => {
 
 // Styles
 const styles = StyleSheet.create({
+
   scrollContainer: {
     color: '#fff',
     padding: 0,
@@ -319,6 +322,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 1,
     backgroundColor: '#ccc',
+
   },
 });
 
