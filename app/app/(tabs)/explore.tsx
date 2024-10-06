@@ -1,103 +1,121 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Image, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View, TextInput, TouchableOpacity, Text, Alert } from 'react-native';
+import { ThemedText } from '@/components/ThemedText'; // Assuming you have this component
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+export default function EmergencyReportForm() {
+  const [emergencyType, setEmergencyType] = useState('');
+  const [description, setDescription] = useState('');
+  const [isEmergencyTypeFocused, setIsEmergencyTypeFocused] = useState(false);
+  const [isDescriptionFocused, setIsDescriptionFocused] = useState(false);
 
-export default function TabTwoScreen() {
+  const handleSubmit = () => {
+    if (emergencyType === '' || description === '') {
+      Alert.alert('Please fill in all fields.');
+      return;
+    }
+
+    // Here you can handle the form submission, e.g., send data to an API
+    Alert.alert('Emergency Report Submitted', `Type: ${emergencyType}\nDescription: ${description}`);
+    
+    // Reset the form fields
+    setEmergencyType('');
+    setDescription('');
+    setIsEmergencyTypeFocused(false);
+    setIsDescriptionFocused(false);
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={<Ionicons size={310} name="code-slash" style={styles.headerImage} />}>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Crime Reporting</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/Maps.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user's current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText> library
-          to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <ThemedText type="title" style={styles.title}>Report an Emergency</ThemedText>
+      
+      {/* Emergency Type Input */}
+      <Text style={styles.label}>Emergency Type</Text>
+      <TextInput
+        style={styles.input}
+        placeholder={isEmergencyTypeFocused ? '' : 'Enter Emergency Type'}
+        placeholderTextColor="#A9A9A9" // Optional: Color for the placeholder text
+        value={emergencyType}
+        onChangeText={setEmergencyType}
+        onFocus={() => setIsEmergencyTypeFocused(true)}
+        onBlur={() => setIsEmergencyTypeFocused(false)}
+      />
+      
+      {/* Description Input */}
+      <Text style={styles.label}>Description</Text>
+      <TextInput
+        style={styles.textArea}
+        placeholder={isDescriptionFocused ? '' : 'Enter Description'}
+        placeholderTextColor="#A9A9A9" // Optional: Color for the placeholder text
+        value={description}
+        onChangeText={setDescription}
+        multiline
+        numberOfLines={4}
+        onFocus={() => setIsDescriptionFocused(true)}
+        onBlur={() => setIsDescriptionFocused(false)}
+      />
+      
+      {/* Submit Button */}
+      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+        <Text style={styles.buttonText}>Submit</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1, // Allow the container to fill the available space
+    justifyContent: 'center', // Center vertically
+    alignItems: 'center', // Center horizontally
+    padding: 20,
   },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
+  title: {
+    fontSize: 33, // Font size for the title
+    fontWeight: 'bold', // Bold text
+    color: '#FF5733', // Color of the title
+    marginBottom: 20, // Space below the title
+    textAlign: "left"
+  },
+  label: {
+    alignSelf: 'flex-start', // Align label to the start
+    marginBottom: 5, // Space between label and input
+    fontSize: 16, // Font size for label
+    color: '#999', // Color for label
+    fontWeight: 'bold', // Bold label text
+    width: '100%', // Ensure it fills the container width
+    maxWidth: 400, // Optional: set a max width for the label
+  },
+  input: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 10, // Rounded corners
+    margin: 10,
+    paddingHorizontal: 10,
+    width: '100%', // Ensure it fills the container width
+    maxWidth: 400, // Optional: set a max width for the input
+  },
+  textArea: {
+    height: 100,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 10, // Rounded corners
+    margin: 10,
+    paddingHorizontal: 10,
+    width: '100%', // Ensure it fills the container width
+    maxWidth: 400, // Optional: set a max width for the text area
+  },
+  submitButton: {
+    backgroundColor: '#FF5733', // Button background color
+    borderRadius: 10, // Rounded corners
+    paddingVertical: 12, // Vertical padding
+    paddingHorizontal: 20, // Horizontal padding
+    alignItems: 'center', // Center the text horizontally
+    marginTop: 10, // Space above the button
+  },
+  buttonText: {
+    color: '#FFFFFF', // Text color
+    fontSize: 16, // Font size
+    fontWeight: 'bold', // Bold text
   },
 });

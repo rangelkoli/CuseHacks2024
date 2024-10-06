@@ -1,9 +1,18 @@
 # app.py
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
+import google.generativeai as genai
+import os
+import pandas as pd
+from flask import send_file
+import numpy as np
+import re
+import random
+import datetime
+genai.configure(api_key="AIzaSyAwvCQ2nREhgWtPDDMZC7Qi4srTX8i2WtM")
 
 # Load environment variables
 load_dotenv()
@@ -82,14 +91,172 @@ def logout():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-@app.route('/user', methods=['GET'])
+@app.route('/user', methods=['POST'])
 def get_user():
+    while True:
+        random_id = random.randint(100000, 999999)
+        data = supabase.table('user_profiles').select().eq('random_id', random_id).execute()
+        print(data)
+        if data.count == None:
+            break
+    # Rest of the code
+    data = supabase.table('user_profiles').select().eq('random_id', random_id).execute()
+    if data==[]:
+        locationData = supabase.table('user_locations').select().eq('id', random_id).execute()
+        print(locationData)
+    else:
+        user = supabase.table('user_profiles').insert({
+            'name': "John Doe",
+        }).execute()
+        print(user)
+        location = supabase.table('user_locations').insert({
+            'user_id': user.data[0]['id'],
+            'coordinates': {
+                'lat': 0.0,
+                'lng': 0.0
+            },
+            'last_updated': "2021-09-10T12:00:00"
+        }).execute()
+        print(user)
+    print(data)
+    return jsonify({"message": "User created successfully", "user_id": user.data[0]['id']}), 201
+
+
+
+@app.route('/upload-photo', methods=['POST'])
+def upload_photo():
     try:
-        user = supabase.auth.get_user()
-        serialized_user = serialize_user(user.user)
-        return jsonify({"user": serialized_user}), 200
+        file = request.files['photo']
+        # Save the file to a desired location
+        file.save('/path/to/save/photo.jpg')
+        return jsonify({"message": "Photo uploaded successfully"}), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 401
+        return jsonify({"error": str(e)}), 400
+
+       
+
+
+@app.route('/blue-light-markers', methods=['GET'])
+def blue_light_markers():
+    new_dataframe = pd.read_csv('./new_markers.csv')
+    print(new_dataframe.head())
+    json_data = []
+    index = 0
+    for row in new_dataframe.iterrows():
+        lat, lng = re.sub(r"\s", "", str(row[1]["Lat"])), re.sub(r"\s", "", str(row[1]["Lng"]))
+        json_data.append({
+            "id": index,
+            "Location": row[1]["Location"],
+            "Lat": lat,
+            "Lng":lng
+        })
+        index += 1
+    print(json_data)
+    try:
+        return json_data, 200
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route('/user_location_update', methods=['POST'])
+def user_location():
+    data = request.json
+    user_id = data.get('user_id')
+    lat = data.get('latitude')
+    lng = data.get('longitude')
+    user_data = supabase.table('user_locations').update({
+        'coordinates': {
+            'lat': lat,
+            'lng': lng
+        },
+        'last_updated': datetime.datetime.now().isoformat()
+    }).eq('user_id', user_id).execute()
+
+    return jsonify({"message": "User location updated successfully",}), 200
+
+@app.route('/dps-location', methods=['GET'])
+def dps_location():
+    dps_locations = [
+        {"lat": 40.7128, "lng": -74.0060},
+        {"lat": 34.0522, "lng": -118.2437},
+        {"lat": 51.5074, "lng": -0.1278},
+        # Add more locations as needed
+    ]
+    
+    # Update new location to one of the locations from the array
+    new_location = random.choice(dps_locations)
+    
+    return jsonify(new_location), 200
+
+
+gemPrompt = """
+I will provide you with a video, you ned to check the video and tell me the type of crime that is being commit, your response should be in the form of a json object like this:
+
+{
+    "crime": "Theft",
+    "short_description": "Theft of a purse",
+}
+This is a serious matter so make sure you are sure of what the crime is. IF you are unsure your fallback should be {
+    "crime": "Unsure",
+    "short_description": "Unsure",
+}Or if you think there is no crime in the video {
+    "crime": "No Crime",
+    "short_description": "No Crime",
+}
+
+"""
+@app.route('/crime', methods=['GET'])
+def crime():
+    video_file_name = 'test.mov'
+    try:
+        video_file = genai.upload_file(path=video_file_name)
+        model = genai.GenerativeModel(model_name="gemini-1.5-pro")
+        response = model.generate_content([video_file, gemPrompt],
+                                      request_options={"timeout": 600})
+        print(response.text)
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 400
+    video_file = genai.upload_file(path=video_file_name)
+    model = genai.GenerativeModel(model_name="gemini-1.5-pro")
+    response = model.generate_content([video_file, gemPrompt],
+                                  request_options={"timeout": 600})
+    print(response.text)
+
+
+    return jsonify(response.text), 200
+
+
+
+@app.route('/dashboard', methods=['GET'])
+def dashboard():
+    # Get data from the user's locations table
+    locations = supabase.table('user_locations').select('*').execute()
+    print(locations)
+
+    return render_template('dashboard.html', locations=locations)
+
+
+@app.route('/video', methods=['POST'])
+def video():
+    data = request.form
+    video = data.get('file')
+    print(data.to_dict())
+
+    print(data.keys())
+
+    # Process the video here
+    # You can access the video parts using video[0][1]
+    # Add your code to process the video
+    print(video)
+
+    return jsonify({"message": "Video uploaded successfully"}), 200
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port="5050")
+
+
+
+
+
