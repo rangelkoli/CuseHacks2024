@@ -115,6 +115,17 @@ def show_photo():
         return jsonify({"error": str(e)}), 400
 
 
+@app.route('/video', methods=['POST'])
+def video():
+    data = request.json
+    text = data.get('text')
+    try:
+        response = genai.video(text)
+        return jsonify({"video_url": response}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
 if __name__ == '__main__':
     app.run(debug=True)
 

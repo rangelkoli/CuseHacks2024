@@ -35,7 +35,7 @@ export default function App() {
     console.log("Sending data to backend...");
     console.log(data);
     axios
-      .post("http://localhost:5000/send-photo", data)
+      .post("http://localhost:5000/video", data)
       .then((response) => {
         console.log("Data sent to backend");
         console.log(response.data);
@@ -51,7 +51,17 @@ export default function App() {
     if (camera) {
       console.log("Camera is ready");
       const videoData = await camera.recordAsync();
-      sendDataToBackend(videoData);
+
+      if (videoData) {
+        const mainData = new FormData();
+        const videoBlob = new Blob([videoData.uri], { type: "video/mp4" });
+        mainData.append("video", videoBlob, "video.mp4");
+        console.log("Video recorded");
+        console.log(videoData);
+        sendDataToBackend(mainData);
+      } else {
+        console.error("Failed to record video");
+      }
     } else {
       console.error("Camera not ready");
     }
