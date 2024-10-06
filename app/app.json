@@ -31,7 +31,9 @@
     "plugins": [
       "expo-router",
       "expo-camera",
-      "@config-plugins/react-native-webrtc"
+      "@config-plugins/react-native-webrtc",
+      "expo-location"
+
 
     ],
     "experiments": {
