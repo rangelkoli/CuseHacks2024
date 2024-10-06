@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Dimensions, Button } from 'react-native';
 import axios from 'axios';
 
-
+// Interface for News Article
 interface NewsArticle {
   url: string;
   title: string;
@@ -14,8 +14,74 @@ interface NewsArticle {
   publishedAt: string;
 }
 
+const apiKey = '0c12b9c4e22129f7407c6e82563539dd'; // Replace with your OpenWeather API key
+const city = 'Syracuse'; // You can modify this to use dynamic location data
 
-const NewsCard = ({ title, imageUrl, description, publisher, publishedTime, onPress }:{
+// WeatherInfo Component
+const WeatherInfo = () => {
+  const [weatherData, setWeatherData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchWeather = async () => {
+    try {
+      const response = await axios.get(
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=imperial&appid=${apiKey}`
+      );
+      setWeatherData(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching weather data: ', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWeather();
+  }, []);
+
+  const getTimeBasedGreeting = () => {
+    const currentHour = new Date().getHours();
+    if (currentHour < 12) return 'Good Morning!';
+    if (currentHour < 18) return 'Good Afternoon!';
+    return 'Good Evening!';
+  };
+
+  // Get current day of the week
+  const getDayOfWeek = () => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const today = new Date();
+    return days[today.getDay()];
+  };
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#0000ff" />;
+  }
+
+  const greeting = getTimeBasedGreeting();
+  const temperature = Math.round(weatherData?.main?.temp || 0);
+  const weatherCondition = weatherData?.weather?.[0]?.description || 'N/A';
+  const dayOfWeek = getDayOfWeek(); // Get the current day
+
+  return (
+    <View style={styles.weatherContainer}>
+      <Image
+        source={{
+          uri: 'https://www.syracuse.edu/images/T_ZJPJZaFZ9RXChaDUT3mGnN34M=/2601/width-1300/3966-Aerial_photograph_of_Syracuse_University_campus_on_a_blue_sky_autumn_day.',
+        }}
+        style={styles.weatherImage}
+        resizeMode="cover"
+      />
+      <View style={styles.overlay}>
+        <Text style={styles.greetingText}>{greeting}</Text>
+        <Text style={styles.weatherTemp}>{`${temperature}°F`}</Text>
+        <Text style={styles.weatherDetails}>{`${dayOfWeek}, ${weatherCondition}`}</Text>
+      </View>
+    </View>
+  );
+};
+
+// NewsCard Component
+const NewsCard = ({ title, imageUrl, description, publisher, publishedTime, onPress }: {
   title: string;
   imageUrl: string;
   description: string;
@@ -36,47 +102,20 @@ const NewsCard = ({ title, imageUrl, description, publisher, publishedTime, onPr
   </TouchableOpacity>
 );
 
-const getTimeBasedGreeting = () => {
-  const currentHour = new Date().getHours();
-  if (currentHour < 12) return 'Good Morning!';
-  if (currentHour < 18) return 'Good Afternoon!';
-  return 'Good Evening!';
-};
-
-const WeatherInfo = () => {
-  const greeting = getTimeBasedGreeting();
-
-  return (
-    <View style={styles.weatherContainer}>
-      <Image
-        source={{
-          uri: 'https://www.syracuse.edu/images/T_ZJPJZaFZ9RXChaDUT3mGnN34M=/2601/width-1300/3966-Aerial_photograph_of_Syracuse_University_campus_on_a_blue_sky_autumn_day.',
-        }}
-        style={styles.weatherImage}
-        resizeMode="cover"
-      />
-      <View style={styles.overlay}>
-        <Text style={styles.greetingText}>{greeting}</Text>
-        <Text style={styles.weatherTemp}>96°F</Text>
-        <Text style={styles.weatherDetails}>Sunny, Monday</Text>
-      </View>
-    </View>
-  );
-};
-
+// Main App Component
 const App = () => {
-  const [news, setNews] = useState<NewsArticle[]>([]); // Store news articles
+  const [news, setNews] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [visibleNewsCount, setVisibleNewsCount] = useState(10); // Number of visible news articles
-  const newsLimit = 10; // Limit for loading more news articles
+  const [visibleNewsCount, setVisibleNewsCount] = useState(10);
+  const newsLimit = 10;
 
-  // Fetch news data from the API
+  // Fetch news data
   const fetchNews = async () => {
     try {
       const response = await axios.get(
-        `https://newsapi.org/v2/everything?q=syracuse&apiKey=5464312f641a4026b26d9270ba361031`
+        'https://newsapi.org/v2/everything?q=syracuse&apiKey=5464312f641a4026b26d9270ba361031'
       );
-      setNews(response.data.articles); // Store all articles
+      setNews(response.data.articles);
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -93,7 +132,7 @@ const App = () => {
   };
 
   const loadMoreNews = () => {
-    setVisibleNewsCount((prevCount) => prevCount + newsLimit); // Load more articles
+    setVisibleNewsCount((prevCount) => prevCount + newsLimit);
   };
 
   if (loading) {
@@ -105,6 +144,23 @@ const App = () => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Weather section */}
         <WeatherInfo />
+
+        {/* Buttons Section */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>Button 1</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>Button 2</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>Button 3</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>Button 4</Text>
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.headerText}>What's up in Cuse</Text>
 
         {/* News section */}
@@ -122,28 +178,37 @@ const App = () => {
 
         {/* Load More Button */}
         {visibleNewsCount < news.length && (
-          <Button title="Load More" onPress={loadMoreNews} />
+          <View style={styles.loadMoreContainer}>
+            <View style={styles.loadMoreLine} />
+            <Text style={styles.loadMoreText} onPress={loadMoreNews}>
+              LOAD MORE
+            </Text>
+            <View style={styles.loadMoreLine} />
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   scrollContainer: {
-    padding: 0, // No padding for the scroll container
+    color: '#fff',
+    padding: 0,
   },
   weatherContainer: {
     position: 'relative',
-    marginTop: 50, // Increased margin to avoid the notch
+    marginTop: 50,
     marginBottom: 10,
     borderRadius: 8,
     width: '100%',
     height: 300,
+    backgroundColor: '#fff',
     overflow: 'hidden',
   },
   weatherImage: {
-    width: Dimensions.get('window').width, // Set image width to screen width dynamically
+    width: Dimensions.get('window').width,
     height: 300,
   },
   overlay: {
@@ -181,7 +246,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 2,
-    marginVertical: 10,
+    marginVertical: 2,
   },
   imageContainer: {
     padding: 10,
@@ -204,24 +269,58 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 14,
     color: '#666',
-    marginTop: 2,
+    marginTop: 5,
+    marginBottom: 5,
   },
   publisher: {
     fontSize: 12,
-    color: '#666',
+    color: '#999',
     marginTop: 5,
-    fontStyle: 'italic',
   },
   publishedTime: {
     fontSize: 12,
     color: '#999',
-    marginTop: 2,
+    marginBottom: 5,
   },
   headerText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
+    marginVertical: 10,
+    color: '#fff',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: 20,
+  },
+  button: {
+    backgroundColor: '#FF5733',
     padding: 10,
-    color: '#333',
+    borderRadius: 5,
+    flex: 1,
+    marginHorizontal: 5,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  loadMoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 10,
+  },
+  loadMoreLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ccc',
+    marginHorizontal: 10,
+  },
+  loadMoreText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FAC898',
   },
 });
 
