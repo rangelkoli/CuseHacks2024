@@ -1,138 +1,329 @@
-import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
-import { useState, useRef } from "react";
-import { Button, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import axios from "axios";
-export default function App() {
-  const [facing, setFacing] = useState<CameraType>("back");
-  const [permission, requestPermission] = useCameraPermissions();
-  const [camera, setCamera] = useState<CameraView | null>(null);
-  const [data, setData] = useState<any>(null);
-  const cameraRef = useRef<CameraView>(null);
 
-  if (!permission) {
-    // Camera permissions are still loading.
-    return <View />;
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Dimensions, Linking } from 'react-native';
+import axios from 'axios';
+
+// Interface for News Article
+interface NewsArticle {
+  url: string;
+  title: string;
+  urlToImage: string;
+  description: string;
+  source: {
+    name: string;
+  };
+  publishedAt: string;
+}
+
+const apiKey = '0c12b9c4e22129f7407c6e82563539dd'; // Replace with your OpenWeather API key
+const city = 'Syracuse'; // You can modify this to use dynamic location data
+
+// WeatherInfo Component
+const WeatherInfo = () => {
+  const [weatherData, setWeatherData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchWeather = async () => {
+    try {
+      const response = await axios.get(
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=imperial&appid=${apiKey}`
+      );
+      setWeatherData(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching weather data: ', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWeather();
+  }, []);
+
+  const getTimeBasedGreeting = () => {
+    const currentHour = new Date().getHours();
+    if (currentHour < 12) return 'Good Morning!';
+    if (currentHour < 18) return 'Good Afternoon!';
+    return 'Good Evening!';
+  };
+
+  // Get current day of the week
+  const getDayOfWeek = () => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const today = new Date();
+    return days[today.getDay()];
+  };
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#0000ff" />;
   }
 
-  if (!permission.granted) {
-    // Camera permissions are not granted yet.
-    return (
-      <View style={styles.container}>
-        <Text style={styles.message}>
-          We need your permission to show the camera
-        </Text>
-        <Button onPress={requestPermission} title='grant permission' />
+  const greeting = getTimeBasedGreeting();
+  const temperature = Math.round(weatherData?.main?.temp || 0);
+  const weatherCondition = weatherData?.weather?.[0]?.description || 'N/A';
+  const dayOfWeek = getDayOfWeek(); // Get the current day
+
+  return (
+    <View style={styles.weatherContainer}>
+      <Image
+        source={{
+          uri: 'https://www.syracuse.edu/images/T_ZJPJZaFZ9RXChaDUT3mGnN34M=/2601/width-1300/3966-Aerial_photograph_of_Syracuse_University_campus_on_a_blue_sky_autumn_day.',
+        }}
+        style={styles.weatherImage}
+        resizeMode="cover"
+      />
+      <View style={styles.overlay}>
+        <Text style={styles.greetingText}>{greeting}</Text>
+        <Text style={styles.weatherTemp}>{`${temperature}°F`}</Text>
+        <Text style={styles.weatherDetails}>{`${dayOfWeek}, ${weatherCondition}`}</Text>
       </View>
-    );
-  }
 
-  function toggleCameraFacing() {
-    setFacing((current) => (current === "back" ? "front" : "back"));
-  }
+    </View>
+  );
+};
 
-  function sendDataToBackend(data: any) {
-    setData(data);
-    console.log("Sending data to backend...");
-    console.log(data);
-    axios
-      .post("http://localhost:5000/video", data)
-      .then((response) => {
-        console.log("Data sent to backend");
-        console.log(response.data);
-      })
-      .catch((error) => {
-        console.error("Error sending data to backend");
-        console.error(error);
-      });
-  }
+// NewsCard Component
+const NewsCard = ({ title, imageUrl, description, publisher, publishedTime, onPress }: {
+  title: string;
+  imageUrl: string;
+  description: string;
+  publisher: string;
+  publishedTime: string;
+  onPress: () => void;
+}) => (
+  <TouchableOpacity style={styles.card} onPress={onPress}>
+    <View style={styles.imageContainer}>
+      <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+    </View>
+    <View style={styles.content}>
+      <Text style={styles.title}>{title ?? 'No Title Available'}</Text>
+      <Text style={styles.description}>{description ?? 'No Description Available'}</Text>
+      <Text style={styles.publisher}>{publisher ?? 'Unknown'}</Text>
+      <Text style={styles.publishedTime}>{publishedTime ?? 'Unknown time'}</Text>
+    </View>
+  </TouchableOpacity>
+);
 
-  async function handleCameraData() {
-    console.log("Recording video...");
-    if (camera) {
-      console.log("Camera is ready");
-      const videoData = await camera.recordAsync();
+// Main App Component
+const App = () => {
+  const [news, setNews] = useState<NewsArticle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [visibleNewsCount, setVisibleNewsCount] = useState(10);
+  const newsLimit = 10;
 
-      if (videoData) {
-        const mainData = new FormData();
-        const videoBlob = new Blob([videoData.uri], { type: "video/mp4" });
-        mainData.append("video", videoBlob, "video.mp4");
-        console.log("Video recorded");
-        console.log(videoData);
-        sendDataToBackend(mainData);
-      } else {
-        console.error("Failed to record video");
-      }
-    } else {
-      console.error("Camera not ready");
+  // Fetch news data
+  const fetchNews = async () => {
+    try {
+      const response = await axios.get(
+        'https://newsapi.org/v2/everything?q=syracuse&apiKey=5464312f641a4026b26d9270ba361031'
+      );
+      setNews(response.data.articles);
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
     }
-  }
+  };
 
-  async function stopRecording() {
-    if (camera) {
-      camera.stopRecording();
-    } else {
-      console.error("Camera not ready");
-    }
+  useEffect(() => {
+    fetchNews();
+  }, []);
+
+  const handleCardPress = (url: string) => {
+    Linking.openURL(url); // Open the article URL in the user's default web browser
+  };
+
+  const loadMoreNews = () => {
+    setVisibleNewsCount((prevCount) => prevCount + newsLimit);
+  };
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#0000ff" />;
   }
 
   return (
-    <View style={styles.container}>
-      <CameraView
-        style={styles.camera}
-        facing={facing}
-        onCameraReady={() => console.log("Camera ready")}
-        ref={(ref) => setCamera(ref)}
-        mode='video'
-      >
+    <SafeAreaView style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* Weather section */}
+        <WeatherInfo />
+
+        {/* Buttons Section */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
-            <Text style={styles.text}>Flip Camera</Text>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>Emergency</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>Maps</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>DPS</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>Contact DPS</Text>
           </TouchableOpacity>
         </View>
-      </CameraView>
-      <Button onPress={handleCameraData} title='Record and Send' />
-      <Button onPress={stopRecording} title='Stop' />
 
-      <Text
-        style={{
-          textAlign: "center",
-          fontSize: 24,
-          fontWeight: "bold",
-          color: "white",
-        }}
-      >
-        {data ? JSON.stringify(data) : ""}
-      </Text>
-    </View>
+        <Text style={styles.headerText}>What's up in Cuse</Text>
+
+        {/* News section */}
+        {news.slice(0, visibleNewsCount).map((item) => (
+          <NewsCard
+            key={item.url}
+            title={item.title}
+            imageUrl={item.urlToImage}
+            description={item.description}
+            publisher={item.source.name}
+            publishedTime={new Date(item.publishedAt).toLocaleString()}
+            onPress={() => handleCardPress(item.url)} // Pass article URL
+          />
+        ))}
+
+        {/* Load More Button */}
+        {visibleNewsCount < news.length && (
+          <View style={styles.loadMoreContainer}>
+            <View style={styles.loadMoreLine} />
+            <Text style={styles.loadMoreText} onPress={loadMoreNews}>
+              LOAD MORE
+            </Text>
+            <View style={styles.loadMoreLine} />
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
-}
+};
 
+// Styles
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
+
+  scrollContainer: {
+    color: '#fff',
+    padding: 0,
   },
-  message: {
-    textAlign: "center",
-    paddingBottom: 10,
+  weatherContainer: {
+    position: 'relative',
+    marginTop: 50,
+    marginBottom: 10,
+    borderRadius: 8,
+    width: '100%',
+    height: 300,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
   },
-  camera: {
-    flex: 1,
+  weatherImage: {
+    width: Dimensions.get('window').width,
+    height: 300,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    paddingLeft: 20,
+  },
+  greetingText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FF5733',
+    marginBottom: 10,
+  },
+  weatherTemp: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#fff',
+    shadowOffset: { width: 5, height: 5 },
+    shadowColor: '#999',
+  },
+  weatherDetails: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  card: {
+    backgroundColor: '#000',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+    marginVertical: 2,
+  },
+  imageContainer: {
+    padding: 10,
+  },
+  image: {
+    width: '100%', // Set image width to full width for news cards
+    height: 200,
+    borderRadius: 8,
+  },
+  content: {
+    padding: 10,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 5,
+    marginBottom: 5,
+    color: '#fff',
+  },
+  description: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 5,
+    marginBottom: 5,
+  },
+  publisher: {
+    fontSize: 12,
+    color: '#ccc',
+  },
+  publishedTime: {
+    fontSize: 12,
+    color: '#ccc',
+    marginBottom: 10,
   },
   buttonContainer: {
-    flex: 1,
-    flexDirection: "row",
-    backgroundColor: "transparent",
-    margin: 64,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 10,
   },
   button: {
-    flex: 1,
-    alignSelf: "flex-end",
-    alignItems: "center",
+    backgroundColor: '#FF5733',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
   },
-  text: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "white",
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  headerText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FF5733',
+    marginVertical: 10,
+    paddingHorizontal: 10,
+  },
+  loadMoreContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  loadMoreText: {
+    fontSize: 13,
+    color: '#FF5733',
+    fontWeight: 'bold',
+    paddingHorizontal: 10,
+  },
+  loadMoreLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ccc',
+
   },
 });
+
+export default App;
